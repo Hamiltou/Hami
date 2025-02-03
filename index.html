@@ -3,301 +3,475 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mangalori - منصة المانغا الشاملة</title>
+    <title>محرك بحث متطور</title>
     <style>
-        /* تنسيقات أساسية */
-        body, html {
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #4CAF50;
+            --background-color: #f8f9fa;
+            --text-color: #202124;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        body {
             font-family: 'Cairo', Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-header {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border: 2px solid #dfe1e5;
+            border-radius: 28px;
+            transition: all 0.3s;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%235f6368" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>') no-repeat 16px center;
+            padding-left: 50px;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(26,115,232,0.3);
+        }
+
+        .search-modes {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .mode-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        #results {
+            margin-top: 2rem;
+        }
+
+        .result-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .result-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-url {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-desc {
+            color: #5f6368;
             line-height: 1.6;
         }
 
-        /* تنسيق الرأس */
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-
-        /* تنسيق القائمة الرئيسية */
-        nav ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            background-color: #34495e;
-        }
-
-        nav ul li {
-            margin: 0 15px;
-        }
-
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            padding: 10px;
-            display: block;
-        }
-
-        /* تنسيق صندوق البحث */
-        .search-box {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .search-box input {
-            width: 50%;
-            padding: 10px;
-            margin-left: 10px;
-        }
-
-        .search-box button {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-        }
-
-        /* تنسيق الأقسام */
-        .section-title {
-            text-align: center;
-            color: #2c3e50;
-            margin: 30px 0;
-        }
-
-        /* تنسيق بطاقات المانغا */
-        .manga-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .manga-card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 15px;
-            text-align: center;
-            transition: transform 0.3s;
-        }
-
-        .manga-card:hover {
-            transform: scale(1.05);
-        }
-
-        .manga-card img {
-            max-width: 100%;
-            height: 300px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-
-        /* تنسيق قائمة المانغا الحديثة */
-        .recent-manga-list {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .recent-manga-list ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .recent-manga-list li {
+        .result-footer {
             display: flex;
             justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #70757a;
         }
 
-        /* تنسيق التعليقات */
-        .comments-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
+        .search-stats {
+            text-align: left;
+            margin: 1rem 0;
+            color: #70757a;
+            font-size: 0.9rem;
         }
 
-        .comment {
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
+        .error-message {
+            color: #dc3545;
+            padding: 1rem;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 1rem 0;
         }
 
-        .comment-author {
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        /* تنسيق التذييل */
-        footer {
-            background-color: #2c3e50;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-
-        footer nav a {
-            color: white;
-            margin: 0 10px;
-            text-decoration: none;
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            #searchInput {
+                font-size: 1rem;
+                padding: 0.8rem 1.5rem;
+                padding-left: 45px;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Mangalori - عالم المانغا</h1>
+    <div class="container">
+        <header class="search-header">
+            <h1 style="text-align: center; margin-bottom: 2rem;">محرك البحث الذكي</h1>
+            
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="ابدأ كتابة كلمات البحث..."
+                    autocomplete="off"
+                    aria-label="حقل البحث"
+                >
+            </div>
+
+            <div class="search-modes">
+                <button class="mode-btn active" data-mode="AND">كل الكلمات</button>
+                <button class="mode-btn" data-mode="OR">أي كلمة</button>
+                <button class="mode-btn" data-mode="EXACT">مطابقة تامة</button>
+            </div>
+        </header>
+
+        <div class="search-stats" id="searchStats"></div>
         
-        <nav>
-            <ul>
-                <li><a href="#home">الرئيسية</a></li>
-                <li><a href="#popular">المانغا الشائعة</a></li>
-                <li><a href="#recent">الأحدث</a></li>
-                <li><a href="#genres">التصنيفات</a></li>
-                <li><a href="#top-rated">الأعلى تقييماً</a></li>
-            </ul>
-        </nav>
+        <div id="results"></div>
+        
+        <div id="errorContainer"></div>
 
-        <div class="search-box">
-            <input type="text" placeholder="ابحث عن مانغا...">
-            <button>بحث</button>
+        <div id="loading" style="display: none; text-align: center; padding: 1rem;">
+            جاري البحث...
+            <div class="loader" style="margin: 10px auto;"></div>
         </div>
-    </header>
+    </div>
 
-    <main>
-        <section id="popular">
-            <h2 class="section-title">المانغا الشائعة</h2>
-            <div class="manga-grid">
-                <!-- بطاقات المانغا الشائعة -->
-                <div class="manga-card">
-                    <img src="/api/placeholder/200/300" alt="وان بيس">
-                    <h3>وان بيس</h3>
-                    <p>عدد الفصول: 1050</p>
-                    <p>التصنيف: مغامرات</p>
-                </div>
-                <div class="manga-card">
-                    <img src="/api/placeholder/200/300" alt="ناروتو">
-                    <h3>ناروتو</h3>
-                    <p>عدد الفصول: 700</p>
-                    <p>التصنيف: إثارة</p>
-                </div>
-                <div class="manga-card">
-                    <img src="/api/placeholder/200/300" alt="هجوم العمالقة">
-                    <h3>هجوم العمالقة</h3>
-                    <p>عدد الفصول: 139</p>
-                    <p>التصنيف: دراما</p>
-                </div>
-                <div class="manga-card">
-                    <img src="/api/placeholder/200/300" alt="ديث نوت">
-                    <h3>ديث نوت</h3>
-                    <p>عدد الفصول: 108</p>
-                    <p>التصنيف: غموض</p>
-                </div>
-            </div>
-        </section>
+<script>
+class AdvancedSearchEngine {
+    constructor() {
+        this.config = {
+            minQueryLength: 2,
+            maxResults: 100,
+            debounceTime: 300,
+            highlightColors: ['#ffeb3b', '#c8e6c9'],
+            searchModes: ['AND', 'OR', 'EXACT'],
+            currentMode: 'AND',
+            apiEndpoint: 'https://api.example.com/search'
+        };
 
-        <section id="recent">
-            <h2 class="section-title">المانغا الحديثة</h2>
-            <div class="recent-manga-list">
-                <ul>
-                    <li>
-                        <span>سباي × فاميلي</span>
-                        <span>الفصل الأخير</span>
-                    </li>
-                    <li>
-                        <span>بوروتو</span>
-                        <span>الفصل 75</span>
-                    </li>
-                    <li>
-                        <span>ديمون سلير</span>
-                        <span>الفصل 230</span>
-                    </li>
-                    <li>
-                        <span>أكاميه غا كيل</span>
-                        <span>الفصل 85</span>
-                    </li>
-                    <li>
-                        <span>نانا</span>
-                        <span>الفصل 100</span>
-                    </li>
-                </ul>
-            </div>
-        </section>
+        this.database = [];
+        this.index = new Map();
+        this.cache = new Map();
+        this.history = [];
+        this.favorites = new Set();
+        this.analytics = {
+            totalSearches: 0,
+            popularQueries: new Map(),
+            searchTimes: []
+        };
 
-        <section id="top-rated">
-            <h2 class="section-title">الأعلى تقييماً</h2>
-            <div class="manga-grid">
-                <div class="manga-card">
-                    <img src="/api/placeholder/200/300" alt="المانغا 1">
-                    <h3>المانغا الأولى</h3>
-                    <p>التقييم: ★★★★★</p>
-                </div>
-                <div class="manga-card">
-                    <img src="/api/placeholder/200/300" alt="المانغا 2">
-                    <h3>المانغا الثانية</h3>
-                    <p>التقييم: ★★★★☆</p>
-                </div>
-                <!-- المزيد من البطاقات -->
-            </div>
-        </section>
+        this.initialize();
+    }
 
-        <section id="comments" class="comments-section">
-            <h2 class="section-title">التعليقات والتقييمات</h2>
-            <div class="comment">
-                <p>موقع رائع للمانغا! محتوى متجدد ومتنوع</p>
-                <p class="comment-author">- أحمد</p>
-            </div>
-            <div class="comment">
-                <p>أحب التصميم الجديد وسهولة التصفح</p>
-                <p class="comment-author">- محمد</p>
-            </div>
-            <div class="comment">
-                <p>إضافة قسم للترجمات المميزة سيكون رائعاً</p>
-                <p class="comment-author">- فاطمة</p>
-            </div>
-        </section>
+    async initialize() {
+        await this.loadData();
+        this.buildSearchIndex();
+        this.setupEventListeners();
+    }
 
-        <section id="genres">
-            <h2 class="section-title">تصنيفات المانغا</h2>
-            <div class="manga-grid">
-                <div class="manga-card">
-                    <h3>أكشن</h3>
-                    <p>25 مانغا</p>
-                </div>
-                <div class="manga-card">
-                    <h3>رومانسية</h3>
-                    <p>18 مانغا</p>
-                </div>
-                <div class="manga-card">
-                    <h3>خيال علمي</h3>
-                    <p>15 مانغا</p>
-                </div>
-                <div class="manga-card">
-                    <h3>دراما</h3>
-                    <p>22 مانغا</p>
-                </div>
-            </div>
-        </section>
-    </main>
+    async loadData() {
+        try {
+            const response = await fetch(this.config.apiEndpoint);
+            if (!response.ok) throw new Error('Failed to load data');
+            this.database = await response.json();
+        } catch (error) {
+            console.error('Using fallback data:', error);
+            this.database = this.getFallbackData();
+        }
+    }
 
-    <footer>
-        <p>© 2025 Mangalori - جميع الحقوق محفوظة</p>
-        <nav>
-            <a href="#">سياسة الخصوصية</a>
-            <a href="#">شروط الاستخدام</a>
-            <a href="#">اتصل بنا</a>
-            <a href="#">الأسئلة الشائعة</a>
-        </nav>
-        <div class="social-links">
-            <a href="#">فيسبوك</a>
-            <a href="#">تويتر</a>
-            <a href="#">انستغرام</a>
-        </div>
-    </footer>
+    getFallbackData() {
+        return [
+            {
+                title: "موقع تعلم البرمجة",
+                url: "https://example.com/learn-programming",
+                description: "موقع متخصص في تعليم لغات البرمجة المختلفة للمبتدئين"
+            },
+            {
+                title: "أخبار التكنولوجيا",
+                url: "https://example.com/tech-news",
+                description: "أحدث الأخبار والتطورات في عالم التكنولوجيا والبرمجة"
+            },
+            {
+                title: "منتدى المطورين العرب",
+                url: "https://example.com/arab-devs",
+                description: "مجتمع عربي لتبادل الخبرات في مجال تطوير البرمجيات"
+            }
+        ];
+    }
+
+    buildSearchIndex() {
+        this.database.forEach((item, id) => {
+            const content = `${item.title} ${item.description}`.toLowerCase();
+            const tokens = this.tokenize(content);
+            
+            tokens.forEach(token => {
+                if (!this.index.has(token)) {
+                    this.index.set(token, new Set());
+                }
+                this.index.get(token).add(id);
+            });
+        });
+    }
+
+    tokenize(text) {
+        return text
+            .replace(/[^\u0600-\u06FF\w\s]/g, '')
+            .split(/\s+/)
+            .filter(t => t.length > 2);
+    }
+
+    async search(query) {
+        if (!query || query.length < this.config.minQueryLength) {
+            this.showError('الرجاء إدخال مصطلح بحث أطول');
+            return [];
+        }
+
+        try {
+            const startTime = performance.now();
+            const results = await this.executeSearch(query);
+            const searchTime = performance.now() - startTime;
+
+            this.updateAnalytics(query, results.length, searchTime);
+            return results;
+        } catch (error) {
+            console.error('Search error:', error);
+            this.showError('حدث خطأ أثناء البحث. الرجاء المحاولة لاحقًا.');
+            return [];
+        }
+    }
+
+    async executeSearch(query) {
+        if (this.cache.has(query)) {
+            return this.cache.get(query);
+        }
+
+        const terms = this.tokenize(query.toLowerCase());
+        let results = [];
+
+        switch (this.config.currentMode) {
+            case 'EXACT':
+                results = this.searchExactMatch(query);
+                break;
+            case 'OR':
+                results = this.searchBooleanOR(terms);
+                break;
+            default: // AND
+                results = this.searchBooleanAND(terms);
+        }
+
+        const rankedResults = this.rankResults(results, terms);
+        this.cache.set(query, rankedResults);
+        return rankedResults;
+    }
+
+    searchBooleanAND(terms) {
+        return this.database.filter(item => {
+            const content = `${item.title} ${item.description}`.toLowerCase();
+            return terms.every(term => content.includes(term));
+        });
+    }
+
+    searchBooleanOR(terms) {
+        return this.database.filter(item => {
+            const content = `${item.title} ${item.description}`.toLowerCase();
+            return terms.some(term => content.includes(term));
+        });
+    }
+
+    searchExactMatch(query) {
+        const exactQuery = query.toLowerCase();
+        return this.database.filter(item => {
+            const content = `${item.title} ${item.description}`.toLowerCase();
+            return content.includes(exactQuery);
+        });
+    }
+
+    rankResults(results, terms) {
+        return results.sort((a, b) => {
+            const scoreA = this.calculateScore(a, terms);
+            const scoreB = this.calculateScore(b, terms);
+            return scoreB - scoreA;
+        });
+    }
+
+    calculateScore(item, terms) {
+        let score = 0;
+        const title = item.title.toLowerCase();
+        const description = item.description.toLowerCase();
+
+        terms.forEach(term => {
+            const titleMatches = (title.match(new RegExp(term, 'g')) || []).length;
+            const descMatches = (description.match(new RegExp(term, 'g')) || []).length;
+            
+            score += titleMatches * 3;
+            score += descMatches * 2;
+            
+            if (title.startsWith(term)) score += 5;
+            if (item.url.includes(term)) score += 4;
+        });
+
+        return score;
+    }
+
+    updateAnalytics(query, resultsCount, searchTime) {
+        this.analytics.totalSearches++;
+        this.analytics.searchTimes.push(searchTime);
+        this.analytics.popularQueries.set(query, 
+            (this.analytics.popularQueries.get(query) || 0) + 1);
+    }
+
+    setupEventListeners() {
+        const searchInput = document.getElementById('searchInput');
+        const searchHandler = this.debounce(async (e) => {
+            const query = e.target.value.trim();
+            this.showLoading(true);
+            
+            try {
+                const results = await this.search(query);
+                this.displayResults(results, query);
+            } finally {
+                this.showLoading(false);
+            }
+        });
+
+        searchInput.addEventListener('input', searchHandler);
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.setSearchMode(btn.dataset.mode);
+                btn.parentElement.querySelectorAll('.mode-btn').forEach(b => 
+                    b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    }
+
+    debounce(fn) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn.apply(this, args), this.config.debounceTime);
+        };
+    }
+
+    setSearchMode(mode) {
+        if (this.config.searchModes.includes(mode)) {
+            this.config.currentMode = mode;
+            this.cache.clear();
+        }
+    }
+
+    displayResults(results, query) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+
+        if (results.length === 0) {
+            resultsDiv.innerHTML = this.createNoResultsMessage(query);
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        results.slice(0, this.config.maxResults).forEach(item => {
+            const element = this.createResultElement(item, query);
+            fragment.appendChild(element);
+        });
+
+        resultsDiv.appendChild(fragment);
+        this.updateSearchStats(results.length);
+    }
+
+    createResultElement(item, query) {
+        const element = document.createElement('div');
+        element.className = 'result-item';
+        element.innerHTML = `
+            <a href="${item.url}" class="result-title">${this.highlightText(item.title, query)}</a>
+            <div class="result-url">${this.highlightUrl(item.url)}</div>
+            <div class="result-desc">${this.highlightText(item.description, query)}</div>
+            <div class="result-footer">
+                <span class="relevance">الأهمية: ${this.calculateScore(item, this.tokenize(query))}</span>
+            </div>
+        `;
+        return element;
+    }
+
+    highlightText(text, query) {
+        const terms = this.tokenize(query.toLowerCase());
+        terms.forEach(term => {
+            const regex = new RegExp(`(${term})`, 'gi');
+            text = text.replace(regex, '<mark>$1</mark>');
+        });
+        return text;
+    }
+
+    showLoading(show) {
+        const loadingDiv = document.getElementById('loading');
+        loadingDiv.style.display = show ? 'block' : 'none';
+    }
+
+    showError(message) {
+        const errorDiv = document.getElementById('errorContainer');
+        errorDiv.innerHTML = `<div class="error-message">${message}</div>`;
+        setTimeout(() => errorDiv.innerHTML = '', 5000);
+    }
+}
+
+// التهيئة عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    const searchEngine = new AdvancedSearchEngine();
+});
+</script>
 </body>
 </html>
