@@ -1,259 +1,303 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" 
-          content="
-            default-src 'self';
-            script-src 'self' 'nonce-quantumSecure' 'unsafe-eval' https://cdnjs.cloudflare.com;
-            style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
-            font-src 'self' https://cdnjs.cloudflare.com;
-            connect-src ws://localhost:3000;
-            object-src 'none';
-            base-uri 'self';
-            form-action 'self';
-          ">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المنصة الكمية المتقدمة</title>
+    <title>Mangalori - منصة المانغا الشاملة</title>
     <style>
-        :root {
-            --quantum-primary: #0f172a;
-            --quantum-accent: #7c3aed;
-            --quantum-error: #dc2626;
+        /* تنسيقات أساسية */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', Arial, sans-serif;
+            background-color: #f4f4f4;
+            line-height: 1.6;
         }
 
-        .quantum-loader {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 4px solid var(--quantum-primary);
-            border-top: 4px solid var(--quantum-accent);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        /* تنسيق الرأس */
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* تنسيق القائمة الرئيسية */
+        nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #34495e;
         }
 
-        .quantum-error {
-            color: var(--quantum-error);
-            padding: 1rem;
-            border: 1px solid currentColor;
-            border-radius: 0.5rem;
-            margin: 1rem;
+        nav ul li {
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            display: block;
+        }
+
+        /* تنسيق صندوق البحث */
+        .search-box {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .search-box input {
+            width: 50%;
+            padding: 10px;
+            margin-left: 10px;
+        }
+
+        .search-box button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+        }
+
+        /* تنسيق الأقسام */
+        .section-title {
+            text-align: center;
+            color: #2c3e50;
+            margin: 30px 0;
+        }
+
+        /* تنسيق بطاقات المانغا */
+        .manga-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .manga-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .manga-card:hover {
+            transform: scale(1.05);
+        }
+
+        .manga-card img {
+            max-width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        /* تنسيق قائمة المانغا الحديثة */
+        .recent-manga-list {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .recent-manga-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .recent-manga-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* تنسيق التعليقات */
+        .comments-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .comment {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* تنسيق التذييل */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        footer nav a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <div id="quantum-root"></div>
-    <div class="quantum-loader" id="loader"></div>
+    <header>
+        <h1>Mangalori - عالم المانغا</h1>
+        
+        <nav>
+            <ul>
+                <li><a href="#home">الرئيسية</a></li>
+                <li><a href="#popular">المانغا الشائعة</a></li>
+                <li><a href="#recent">الأحدث</a></li>
+                <li><a href="#genres">التصنيفات</a></li>
+                <li><a href="#top-rated">الأعلى تقييماً</a></li>
+            </ul>
+        </nav>
 
-    <script nonce="quantumSecure">
-        class QuantumCore {
-            constructor() {
-                this.nonce = 'quantumSecure';
-                this.init().catch(err => this.handleFatalError(err));
-            }
+        <div class="search-box">
+            <input type="text" placeholder="ابحث عن مانغا...">
+            <button>بحث</button>
+        </div>
+    </header>
 
-            async init() {
-                await this.loadDependencies();
-                this.initWebSocket();
-                await this.initAuthSystem();
-                this.hideLoader();
-            }
+    <main>
+        <section id="popular">
+            <h2 class="section-title">المانغا الشائعة</h2>
+            <div class="manga-grid">
+                <!-- بطاقات المانغا الشائعة -->
+                <div class="manga-card">
+                    <img src="/api/placeholder/200/300" alt="وان بيس">
+                    <h3>وان بيس</h3>
+                    <p>عدد الفصول: 1050</p>
+                    <p>التصنيف: مغامرات</p>
+                </div>
+                <div class="manga-card">
+                    <img src="/api/placeholder/200/300" alt="ناروتو">
+                    <h3>ناروتو</h3>
+                    <p>عدد الفصول: 700</p>
+                    <p>التصنيف: إثارة</p>
+                </div>
+                <div class="manga-card">
+                    <img src="/api/placeholder/200/300" alt="هجوم العمالقة">
+                    <h3>هجوم العمالقة</h3>
+                    <p>عدد الفصول: 139</p>
+                    <p>التصنيف: دراما</p>
+                </div>
+                <div class="manga-card">
+                    <img src="/api/placeholder/200/300" alt="ديث نوت">
+                    <h3>ديث نوت</h3>
+                    <p>عدد الفصول: 108</p>
+                    <p>التصنيف: غموض</p>
+                </div>
+            </div>
+        </section>
 
-            async loadDependencies() {
-                await Promise.all([
-                    this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'),
-                    this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js')
-                ]);
-            }
+        <section id="recent">
+            <h2 class="section-title">المانغا الحديثة</h2>
+            <div class="recent-manga-list">
+                <ul>
+                    <li>
+                        <span>سباي × فاميلي</span>
+                        <span>الفصل الأخير</span>
+                    </li>
+                    <li>
+                        <span>بوروتو</span>
+                        <span>الفصل 75</span>
+                    </li>
+                    <li>
+                        <span>ديمون سلير</span>
+                        <span>الفصل 230</span>
+                    </li>
+                    <li>
+                        <span>أكاميه غا كيل</span>
+                        <span>الفصل 85</span>
+                    </li>
+                    <li>
+                        <span>نانا</span>
+                        <span>الفصل 100</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
 
-            loadScript(src) {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.nonce = this.nonce;
-                    script.src = src;
-                    script.onload = resolve;
-                    script.onerror = () => reject(new Error(`فشل تحميل السكربت: ${src}`));
-                    document.head.appendChild(script);
-                });
-            }
+        <section id="top-rated">
+            <h2 class="section-title">الأعلى تقييماً</h2>
+            <div class="manga-grid">
+                <div class="manga-card">
+                    <img src="/api/placeholder/200/300" alt="المانغا 1">
+                    <h3>المانغا الأولى</h3>
+                    <p>التقييم: ★★★★★</p>
+                </div>
+                <div class="manga-card">
+                    <img src="/api/placeholder/200/300" alt="المانغا 2">
+                    <h3>المانغا الثانية</h3>
+                    <p>التقييم: ★★★★☆</p>
+                </div>
+                <!-- المزيد من البطاقات -->
+            </div>
+        </section>
 
-            initWebSocket() {
-                this.socket = io('http://localhost:3000', {
-                    transports: ['websocket'],
-                    auth: {
-                        token: this.generateSessionToken()
-                    }
-                });
+        <section id="comments" class="comments-section">
+            <h2 class="section-title">التعليقات والتقييمات</h2>
+            <div class="comment">
+                <p>موقع رائع للمانغا! محتوى متجدد ومتنوع</p>
+                <p class="comment-author">- أحمد</p>
+            </div>
+            <div class="comment">
+                <p>أحب التصميم الجديد وسهولة التصفح</p>
+                <p class="comment-author">- محمد</p>
+            </div>
+            <div class="comment">
+                <p>إضافة قسم للترجمات المميزة سيكون رائعاً</p>
+                <p class="comment-author">- فاطمة</p>
+            </div>
+        </section>
 
-                this.socket.on('connect_error', (err) => {
-                    this.handleError(`خطأ في الاتصال: ${err.message}`);
-                });
+        <section id="genres">
+            <h2 class="section-title">تصنيفات المانغا</h2>
+            <div class="manga-grid">
+                <div class="manga-card">
+                    <h3>أكشن</h3>
+                    <p>25 مانغا</p>
+                </div>
+                <div class="manga-card">
+                    <h3>رومانسية</h3>
+                    <p>18 مانغا</p>
+                </div>
+                <div class="manga-card">
+                    <h3>خيال علمي</h3>
+                    <p>15 مانغا</p>
+                </div>
+                <div class="manga-card">
+                    <h3>دراما</h3>
+                    <p>22 مانغا</p>
+                </div>
+            </div>
+        </section>
+    </main>
 
-                this.socket.on('quantum-update', (data) => {
-                    this.handleDataUpdate(data);
-                });
-            }
-
-            generateSessionToken() {
-                const buffer = new Uint8Array(32);
-                window.crypto.getRandomValues(buffer);
-                return btoa(String.fromCharCode(...buffer));
-            }
-
-            async initAuthSystem() {
-                this.auth = new QuantumAuth();
-                await this.auth.initialize();
-            }
-
-            handleDataUpdate(data) {
-                const root = document.getElementById('quantum-root');
-                root.innerHTML = `
-                    <div class="quantum-hologram">
-                        <h3>التحديثات الحية:</h3>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    </div>
-                `;
-            }
-
-            hideLoader() {
-                document.getElementById('loader').style.display = 'none';
-            }
-
-            handleError(message) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'quantum-error';
-                errorDiv.textContent = message;
-                document.body.appendChild(errorDiv);
-            }
-
-            handleFatalError(err) {
-                console.error('خطأ كارثي:', err);
-                this.hideLoader();
-                this.handleError('تعطل النظام، يرجى إعادة المحاولة لاحقًا');
-            }
-        }
-
-        class QuantumAuth {
-            async initialize() {
-                if (!this.supportsWebAuthn()) {
-                    throw new Error('المتصفح لا يدعم المصادقة المتقدمة');
-                }
-                
-                try {
-                    const credential = await this.createAuthCredential();
-                    this.storeEncryptedCredential(credential);
-                } catch (err) {
-                    this.handleAuthError(err);
-                    throw err;
-                }
-            }
-
-            supportsWebAuthn() {
-                return window.PublicKeyCredential && 
-                    typeof window.PublicKeyCredential === 'function';
-            }
-
-            async createAuthCredential() {
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-
-                const userId = new Uint8Array(16);
-                window.crypto.getRandomValues(userId);
-
-                return navigator.credentials.create({
-                    publicKey: {
-                        challenge: challenge,
-                        rp: {
-                            id: window.location.hostname,
-                            name: "النظام الكمي"
-                        },
-                        user: {
-                            id: userId,
-                            name: "user@quantum.com",
-                            displayName: "مستخدم كمي"
-                        },
-                        pubKeyCredParams: [
-                            { type: "public-key", alg: -7 },  // ES256
-                            { type: "public-key", alg: -257 }, // RS256
-                            { type: "public-key", alg: -8 }    // EdDSA
-                        ],
-                        authenticatorSelection: {
-                            userVerification: "required",
-                            requireResidentKey: true,
-                            authenticatorAttachment: "platform"
-                        },
-                        attestation: "direct",
-                        timeout: 120000
-                    }
-                });
-            }
-
-            async storeEncryptedCredential(credential) {
-                try {
-                    const encrypted = await this.encryptData(credential);
-                    localStorage.setItem('quantumAuth', JSON.stringify(encrypted));
-                } catch (err) {
-                    throw new Error('فشل في تخزين بيانات المصادقة');
-                }
-            }
-
-            async encryptData(data) {
-                const encoder = new TextEncoder();
-                const key = await window.crypto.subtle.generateKey(
-                    { name: "AES-GCM", length: 256 },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
-
-                const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const encrypted = await window.crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv },
-                    key,
-                    encoder.encode(JSON.stringify(data))
-                );
-
-                return {
-                    iv: Array.from(iv),
-                    data: Array.from(new Uint8Array(encrypted)),
-                    key: await window.crypto.subtle.exportKey("jwk", key)
-                };
-            }
-
-            handleAuthError(error) {
-                let message = 'خطأ غير معروف في المصادقة';
-                switch(error.name) {
-                    case 'NotAllowedError':
-                        message = 'تم رفض الإذن من قبل المستخدم';
-                        break;
-                    case 'SecurityError':
-                        message = 'مشكلة أمان في النطاق أو البروتوكول';
-                        break;
-                    case 'UnknownError':
-                        message = 'فشل غير متوقع في المصادق الحيوي';
-                        break;
-                }
-                throw new Error(message);
-            }
-        }
-
-        // بدء التشغيل عند اكتمال تحميل DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                new QuantumCore();
-            } catch (err) {
-                console.error('فشل تهيئة النظام:', err);
-                document.body.innerHTML = `<div class="quantum-error">خطأ في تشغيل النظام</div>`;
-            }
-        });
-    </script>
+    <footer>
+        <p>© 2025 Mangalori - جميع الحقوق محفوظة</p>
+        <nav>
+            <a href="#">سياسة الخصوصية</a>
+            <a href="#">شروط الاستخدام</a>
+            <a href="#">اتصل بنا</a>
+            <a href="#">الأسئلة الشائعة</a>
+        </nav>
+        <div class="social-links">
+            <a href="#">فيسبوك</a>
+            <a href="#">تويتر</a>
+            <a href="#">انستغرام</a>
+        </div>
+    </footer>
 </body>
 </html>
