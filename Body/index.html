@@ -1,1 +1,259 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" 
+          content="
+            default-src 'self';
+            script-src 'self' 'nonce-quantumSecure' 'unsafe-eval' https://cdnjs.cloudflare.com;
+            style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+            font-src 'self' https://cdnjs.cloudflare.com;
+            connect-src ws://localhost:3000;
+            object-src 'none';
+            base-uri 'self';
+            form-action 'self';
+          ">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المنصة الكمية المتقدمة</title>
+    <style>
+        :root {
+            --quantum-primary: #0f172a;
+            --quantum-accent: #7c3aed;
+            --quantum-error: #dc2626;
+        }
+
+        .quantum-loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 4px solid var(--quantum-primary);
+            border-top: 4px solid var(--quantum-accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quantum-error {
+            color: var(--quantum-error);
+            padding: 1rem;
+            border: 1px solid currentColor;
+            border-radius: 0.5rem;
+            margin: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="quantum-root"></div>
+    <div class="quantum-loader" id="loader"></div>
+
+    <script nonce="quantumSecure">
+        class QuantumCore {
+            constructor() {
+                this.nonce = 'quantumSecure';
+                this.init().catch(err => this.handleFatalError(err));
+            }
+
+            async init() {
+                await this.loadDependencies();
+                this.initWebSocket();
+                await this.initAuthSystem();
+                this.hideLoader();
+            }
+
+            async loadDependencies() {
+                await Promise.all([
+                    this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'),
+                    this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js')
+                ]);
+            }
+
+            loadScript(src) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.nonce = this.nonce;
+                    script.src = src;
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error(`فشل تحميل السكربت: ${src}`));
+                    document.head.appendChild(script);
+                });
+            }
+
+            initWebSocket() {
+                this.socket = io('http://localhost:3000', {
+                    transports: ['websocket'],
+                    auth: {
+                        token: this.generateSessionToken()
+                    }
+                });
+
+                this.socket.on('connect_error', (err) => {
+                    this.handleError(`خطأ في الاتصال: ${err.message}`);
+                });
+
+                this.socket.on('quantum-update', (data) => {
+                    this.handleDataUpdate(data);
+                });
+            }
+
+            generateSessionToken() {
+                const buffer = new Uint8Array(32);
+                window.crypto.getRandomValues(buffer);
+                return btoa(String.fromCharCode(...buffer));
+            }
+
+            async initAuthSystem() {
+                this.auth = new QuantumAuth();
+                await this.auth.initialize();
+            }
+
+            handleDataUpdate(data) {
+                const root = document.getElementById('quantum-root');
+                root.innerHTML = `
+                    <div class="quantum-hologram">
+                        <h3>التحديثات الحية:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            }
+
+            hideLoader() {
+                document.getElementById('loader').style.display = 'none';
+            }
+
+            handleError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'quantum-error';
+                errorDiv.textContent = message;
+                document.body.appendChild(errorDiv);
+            }
+
+            handleFatalError(err) {
+                console.error('خطأ كارثي:', err);
+                this.hideLoader();
+                this.handleError('تعطل النظام، يرجى إعادة المحاولة لاحقًا');
+            }
+        }
+
+        class QuantumAuth {
+            async initialize() {
+                if (!this.supportsWebAuthn()) {
+                    throw new Error('المتصفح لا يدعم المصادقة المتقدمة');
+                }
+                
+                try {
+                    const credential = await this.createAuthCredential();
+                    this.storeEncryptedCredential(credential);
+                } catch (err) {
+                    this.handleAuthError(err);
+                    throw err;
+                }
+            }
+
+            supportsWebAuthn() {
+                return window.PublicKeyCredential && 
+                    typeof window.PublicKeyCredential === 'function';
+            }
+
+            async createAuthCredential() {
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const userId = new Uint8Array(16);
+                window.crypto.getRandomValues(userId);
+
+                return navigator.credentials.create({
+                    publicKey: {
+                        challenge: challenge,
+                        rp: {
+                            id: window.location.hostname,
+                            name: "النظام الكمي"
+                        },
+                        user: {
+                            id: userId,
+                            name: "user@quantum.com",
+                            displayName: "مستخدم كمي"
+                        },
+                        pubKeyCredParams: [
+                            { type: "public-key", alg: -7 },  // ES256
+                            { type: "public-key", alg: -257 }, // RS256
+                            { type: "public-key", alg: -8 }    // EdDSA
+                        ],
+                        authenticatorSelection: {
+                            userVerification: "required",
+                            requireResidentKey: true,
+                            authenticatorAttachment: "platform"
+                        },
+                        attestation: "direct",
+                        timeout: 120000
+                    }
+                });
+            }
+
+            async storeEncryptedCredential(credential) {
+                try {
+                    const encrypted = await this.encryptData(credential);
+                    localStorage.setItem('quantumAuth', JSON.stringify(encrypted));
+                } catch (err) {
+                    throw new Error('فشل في تخزين بيانات المصادقة');
+                }
+            }
+
+            async encryptData(data) {
+                const encoder = new TextEncoder();
+                const key = await window.crypto.subtle.generateKey(
+                    { name: "AES-GCM", length: 256 },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv },
+                    key,
+                    encoder.encode(JSON.stringify(data))
+                );
+
+                return {
+                    iv: Array.from(iv),
+                    data: Array.from(new Uint8Array(encrypted)),
+                    key: await window.crypto.subtle.exportKey("jwk", key)
+                };
+            }
+
+            handleAuthError(error) {
+                let message = 'خطأ غير معروف في المصادقة';
+                switch(error.name) {
+                    case 'NotAllowedError':
+                        message = 'تم رفض الإذن من قبل المستخدم';
+                        break;
+                    case 'SecurityError':
+                        message = 'مشكلة أمان في النطاق أو البروتوكول';
+                        break;
+                    case 'UnknownError':
+                        message = 'فشل غير متوقع في المصادق الحيوي';
+                        break;
+                }
+                throw new Error(message);
+            }
+        }
+
+        // بدء التشغيل عند اكتمال تحميل DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                new QuantumCore();
+            } catch (err) {
+                console.error('فشل تهيئة النظام:', err);
+                document.body.innerHTML = `<div class="quantum-error">خطأ في تشغيل النظام</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
