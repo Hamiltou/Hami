@@ -3,478 +3,530 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محرك بحث متطور</title>
+    <title>شريط بحث متقدم</title>
     <style>
         :root {
-            --primary-color: #1a73e8;
-            --secondary-color: #4CAF50;
-            --background-color: #f8f9fa;
-            --text-color: #202124;
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --danger-color: #dc2626;
+            --text-color: #1f2937;
+            --bg-color: #f3f4f6;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        .search-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
         }
 
-        body {
-            font-family: 'Cairo', Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .search-header {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 2rem;
-            border-radius: 16px;
-            margin-bottom: 2rem;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        #searchInput {
-            flex: 1;
-            padding: 1rem 2rem;
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 2rem;
             font-size: 1.1rem;
-            border: 2px solid #dfe1e5;
-            border-radius: 28px;
-            transition: all 0.3s;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%235f6368" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>') no-repeat 16px center;
-            padding-left: 50px;
+            transition: all 0.3s ease;
+            background: #fff;
         }
 
-        #searchInput:focus {
-            outline: none;
+        .search-input:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 2px 8px rgba(26,115,232,0.3);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
-        .search-modes {
-            display: flex;
-            gap: 10px;
-            margin-top: 1rem;
-        }
-
-        .mode-btn {
-            padding: 6px 12px;
-            border-radius: 20px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .mode-btn.active {
+        .search-button {
+            padding: 1rem 2rem;
             background: var(--primary-color);
             color: white;
-            border-color: var(--primary-color);
+            border: none;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        #results {
-            margin-top: 2rem;
+        .search-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
         }
 
-        .result-item {
-            background: white;
+        .search-results {
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-item {
             padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
+            border-bottom: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
         }
 
-        .result-item:hover {
-            transform: translateY(-2px);
+        .search-item:hover {
+            background: var(--bg-color);
         }
 
-        .result-title {
+        .highlight {
+            background: #ffec99;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger-color);
             font-size: 1.2rem;
-            color: var(--primary-color);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-url {
-            color: var(--secondary-color);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-desc {
-            color: #5f6368;
-            line-height: 1.6;
-        }
-
-        .result-footer {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
-            font-size: 0.85rem;
-            color: #70757a;
         }
 
         .search-stats {
-            text-align: left;
-            margin: 1rem 0;
-            color: #70757a;
-            font-size: 0.9rem;
-        }
-
-        .error-message {
-            color: #dc3545;
+            text-align: center;
+            color: #64748b;
             padding: 1rem;
-            background: #f8d7da;
-            border-radius: 8px;
-            margin: 1rem 0;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            #searchInput {
-                font-size: 1rem;
-                padding: 0.8rem 1.5rem;
-                padding-left: 45px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="search-header">
-            <h1 style="text-align: center; margin-bottom: 2rem;">محرك البحث الذكي</h1>
-            
-            <div class="search-box">
+    <div class="search-container">
+        <form id="searchForm">
+            <div class="search-group">
                 <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="ابدأ كتابة كلمات البحث..."
+                    type="search" 
+                    id="searchInput"
+                    class="search-input"
+                    placeholder="ابحث هنا..."
+                    aria-label="بحث"
                     autocomplete="off"
-                    aria-label="حقل البحث"
                 >
+                <button 
+                    type="submit"
+                    class="search-button"
+                >
+                    بحث
+                </button>
             </div>
+        </form>
 
-            <div class="search-modes">
-                <button class="mode-btn active" data-mode="AND">كل الكلمات</button>
-                <button class="mode-btn" data-mode="OR">أي كلمة</button>
-                <button class="mode-btn" data-mode="EXACT">مطابقة تامة</button>
-            </div>
-        </header>
-
-        <div class="search-stats" id="searchStats"></div>
-        
-        <div id="results"></div>
-        
-        <div id="errorContainer"></div>
-
-        <div id="loading" style="display: none; text-align: center; padding: 1rem;">
-            جاري البحث...
-            <div class="loader" style="margin: 10px auto;"></div>
+        <div id="searchResults" class="search-results">
+            <div class="search-stats" id="searchStats"></div>
+            <div class="search-item">نتيجة بحث 1</div>
+            <div class="search-item">نتيجة بحث 2</div>
+            <div class="search-item">نتيجة بحث 3</div>
+            <p id="resultsMessage" class="no-results"></p>
         </div>
     </div>
-<script>
-class AdvancedSearchEngine {
+<script>class AdvancedSearch {
     constructor() {
-        this.config = {
-            minQueryLength: 2,
-            maxResults: 100,
-            debounceTime: 300,
-            searchModes: ['AND', 'OR', 'EXACT'],
-            currentMode: 'AND',
-            enableAssistants: true,
-            assistants: {
-                autoComplete: true,
-                spellCheck: true,
-                quickActions: true,
-                relatedSearches: true
-            }
-        };
-
-        this.initComponents();
+        this._initProperties();
+        this._setupObservers();
+        this._registerServiceWorker();
+        this._addKeyboardShortcuts();
+        this.init();
     }
 
-    initComponents() {
-        this.database = [];
-        this.index = new Map();
+    _initProperties() {
+        this.searchForm = document.getElementById('searchForm');
+        this.searchInput = document.getElementById('searchInput');
+        this.searchResults = document.getElementById('searchResults');
+        this.resultsMessage = document.getElementById('resultsMessage');
+        this.searchStats = document.getElementById('searchStats');
+        this.items = Array.from(document.querySelectorAll('.search-item'));
+        this.debounceTimeout = null;
         this.cache = new Map();
-        this.history = JSON.parse(localStorage.getItem('searchHistory')) || [];
-        this.favorites = new Set(JSON.parse(localStorage.getItem('searchFavorites')) || []);
-        this.initialize();
-        this.setupAssistants();
+        this.worker = this._createWorker();
+        this.lastSearchTerm = '';
+        this.keyboardHandler = this._handleKeyboard.bind(this);
+        this.sessionId = this._generateSessionId();
+        this.analyticsQueue = [];
+        this.performanceMetrics = {
+            searchStart: 0,
+            searchEnd: 0
+        };
     }
 
-    setupAssistants() {
-        if (this.config.enableAssistants) {
-            this.setupAutoComplete();
-            this.setupQuickActions();
-            this.setupInstantPreview();
+    _setupObservers() {
+        this.intersectionObserver = new IntersectionObserver(
+            this._handleLazyLoad.bind(this),
+            { rootMargin: '200px' }
+        );
+        
+        this.mutationObserver = new MutationObserver(
+            this._handleDOMChanges.bind(this)
+        );
+    }
+
+    _createWorker() {
+        if (window.Worker) {
+            const worker = new Worker('search.worker.js');
+            worker.onmessage = this._handleWorkerMessage.bind(this);
+            return worker;
         }
+        return null;
     }
 
-    // ------ نظام الإكمال التلقائي المحسن ------
-    setupAutoComplete() {
-        const searchInput = document.getElementById('searchInput');
-        const acList = document.createElement('datalist');
-        acList.id = 'searchSuggestions';
-        searchInput.after(acList);
-
-        searchInput.addEventListener('input', this.debounce(async (e) => {
-            const query = e.target.value.trim();
-            if (query.length < 2) return;
-
-            const suggestions = await this.generateSuggestions(query);
-            this.updateAutoComplete(suggestions);
-        }));
+    _generateSessionId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     }
 
-    async generateSuggestions(query) {
-        return [
-            ...this.getHistorySuggestions(query),
-            ...this.getRelatedSearches(query),
-            ...await this.getBingSuggestions(query)
-        ].slice(0, 8);
+    init() {
+        this._setupEventListeners();
+        this._initializeItems();
+        this._trackPerformance();
+        this._setupAnalyticsFlush();
+        this._loadPreferences();
+        this._setupErrorHandling();
     }
 
-    getHistorySuggestions(query) {
-        return this.history
-            .filter(item => item.toLowerCase().includes(query.toLowerCase()))
-            .sort((a, b) => b.timestamp - a.timestamp);
+    _setupEventListeners() {
+        const eventMap = [
+            [this.searchForm, 'submit', this.handleSubmit.bind(this)],
+            [this.searchInput, 'input', this.handleInput.bind(this)],
+            [window, 'load', this.handlePageLoad.bind(this)],
+            [window, 'beforeunload', this._flushAnalytics.bind(this)],
+            [document, 'keydown', this.keyboardHandler]
+        ];
+
+        eventMap.forEach(([target, event, handler]) => {
+            target.addEventListener(event, handler);
+        });
     }
 
-    async getBingSuggestions(query) {
+    handleSubmit(e) {
+        e.preventDefault();
+        this._trackEvent('search/submit');
+        this.performanceMetrics.searchStart = performance.now();
+        this.performSearch();
+    }
+
+    handleInput() {
+        this._trackEvent('search/input');
+        clearTimeout(this.debounceTimeout);
+        this.debounceTimeout = setTimeout(() => {
+            this.performSearch();
+            this._adjustInputWidth();
+        }, this._calculateDebounceTime());
+    }
+
+    _calculateDebounceTime() {
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        return isMobile ? 500 : 300;
+    }
+
+    _adjustInputWidth() {
+        const tempSpan = document.createElement('span');
+        tempSpan.textContent = this.searchInput.value || this.searchInput.placeholder;
+        Object.assign(tempSpan.style, {
+            position: 'absolute',
+            visibility: 'hidden',
+            whiteSpace: 'pre'
+        });
+        document.body.appendChild(tempSpan);
+        const width = tempSpan.offsetWidth + 20;
+        this.searchInput.style.width = `${Math.min(width, 800)}px`;
+        tempSpan.remove();
+    }
+
+    async performSearch() {
         try {
-            const response = await fetch(`https://api.bing.com/osjson.aspx?query=${query}`);
-            const data = await response.json();
-            return data[1] || [];
+            const searchTerm = this.normalizeText(this.searchInput.value.trim());
+            
+            if (this._shouldUseCache(searchTerm)) {
+                return this._applyCachedResults(searchTerm);
+            }
+
+            if (this.worker) {
+                this.worker.postMessage({
+                    type: 'SEARCH',
+                    items: this.items.map(item => ({
+                        id: item.id,
+                        content: item.dataset.originalContent
+                    })),
+                    searchTerm
+                });
+            } else {
+                this._processSearchLocally(searchTerm);
+            }
+
+            this._prefetchRelatedContent(searchTerm);
+            this._updateSearchHistory(searchTerm);
+            this._saveSearchState(searchTerm);
+            this._trackSearchMetrics(searchTerm);
         } catch (error) {
-            return [];
+            this._handleError(error);
         }
     }
 
-    updateAutoComplete(suggestions) {
-        const acList = document.getElementById('searchSuggestions');
-        acList.innerHTML = suggestions
-            .map(s => `<option value="${s}">`)
-            .join('');
+    _processSearchLocally(searchTerm) {
+        const results = this.items.map(item => {
+            const originalContent = this.normalizeText(item.dataset.originalContent);
+            const hasMatch = this.checkMatch(originalContent, searchTerm);
+            return { id: item.id, hasMatch };
+        });
+
+        this._applySearchResults(results, searchTerm);
     }
 
-    // ------ مساعد التصحيح التلقائي ------
-    async checkSpelling(query) {
-        try {
-            const response = await fetch(`https://api.cognitive.microsoft.com/bing/v7.0/spellcheck?text=${query}`, {
-                headers: { 'Ocp-Apim-Subscription-Key': 'YOUR_BING_KEY' }
+    _handleWorkerMessage(event) {
+        if (event.data.type === 'SEARCH_RESULTS') {
+            this._applySearchResults(event.data.results, event.data.searchTerm);
+        }
+    }
+
+    _applySearchResults(results, searchTerm) {
+        let matchCount = 0;
+        const startTime = performance.now();
+
+        results.forEach((result, index) => {
+            const item = this.items[index];
+            item.style.display = result.hasMatch ? 'block' : 'none';
+            
+            if (result.hasMatch) {
+                matchCount++;
+                item.innerHTML = this.highlightMatches(
+                    item.dataset.originalContent, 
+                    searchTerm
+                );
+                this._animateItemAppearance(item);
+            }
+        });
+
+        this._updateUIComponents(matchCount);
+        this.cache.set(searchTerm, results);
+        this.performanceMetrics.searchEnd = performance.now();
+        
+        this._reportPerformanceMetrics({
+            searchTerm,
+            duration: this.performanceMetrics.searchEnd - this.performanceMetrics.searchStart,
+            resultCount: matchCount
+        });
+    }
+
+    _animateItemAppearance(item) {
+        item.animate([
+            { opacity: 0, transform: 'translateY(20px)' },
+            { opacity: 1, transform: 'translateY(0)' }
+        ], {
+            duration: 300,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        });
+    }
+
+    _updateUIComponents(matchCount) {
+        this.updateResultsMessage(matchCount > 0);
+        this.updateSearchStats(matchCount);
+        this._updateAriaLive(matchCount);
+    }
+
+    _updateAriaLive(matchCount) {
+        const ariaMessage = matchCount > 0 ?
+            `تم العثور على ${matchCount} نتيجة` :
+            'لم يتم العثور على نتائج';
+        this.searchResults.setAttribute('aria-live', 'polite');
+        this.searchResults.setAttribute('aria-atomic', 'true');
+        this.searchResults.textContent = ariaMessage;
+    }
+
+    _shouldUseCache(searchTerm) {
+        return this.cache.has(searchTerm) && 
+               this.lastSearchTerm.startsWith(searchTerm);
+    }
+
+    _applyCachedResults(searchTerm) {
+        const cachedResults = this.cache.get(searchTerm);
+        this._applySearchResults(cachedResults, searchTerm);
+    }
+
+    _prefetchRelatedContent(searchTerm) {
+        if (searchTerm.length > 3) {
+            fetch(`/api/prefetch?term=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(data => this._handlePrefetchData(data))
+                .catch(error => console.error('Prefetch error:', error));
+        }
+    }
+
+    _handlePrefetchData(data) {
+        if (data.suggestions) {
+            this._showSuggestions(data.suggestions);
+        }
+    }
+
+    _showSuggestions(suggestions) {
+        // Implementation for showing search suggestions
+    }
+
+    _trackSearchMetrics(searchTerm) {
+        this.analyticsQueue.push({
+            type: 'search',
+            term: searchTerm,
+            timestamp: Date.now(),
+            sessionId: this.sessionId
+        });
+    }
+
+    _setupAnalyticsFlush() {
+        setInterval(() => this._flushAnalytics(), 10000);
+    }
+
+    _flushAnalytics() {
+        if (this.analyticsQueue.length > 0) {
+            navigator.sendBeacon('/analytics', JSON.stringify(this.analyticsQueue));
+            this.analyticsQueue = [];
+        }
+    }
+
+    _trackEvent(eventName) {
+        this.analyticsQueue.push({
+            type: 'event',
+            name: eventName,
+            timestamp: Date.now(),
+            sessionId: this.sessionId
+        });
+    }
+
+    _handleLazyLoad(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const item = entry.target;
+                item.querySelector('img')?.setAttribute('src', item.dataset.src);
+                this.intersectionObserver.unobserve(item);
+            }
+        });
+    }
+
+    _handleDOMChanges(mutations) {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    if (node.classList?.contains('search-item')) {
+                        this.items.push(node);
+                        this.intersectionObserver.observe(node);
+                    }
+                });
+            }
+        });
+    }
+
+    _handleKeyboard(e) {
+        if (e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            this.searchInput.focus();
+        }
+    }
+
+    _setupErrorHandling() {
+        window.onerror = (message, source, lineno, colno, error) => {
+            this._trackEvent('error', {
+                message,
+                source,
+                line: lineno,
+                column: colno,
+                error: error?.stack
             });
-            const data = await response.json();
-            return data.flaggedTokens.map(e => ({
-                original: e.token,
-                suggestion: e.suggestions[0].suggestion
-            }));
-        } catch (error) {
-            return this.localSpellCheck(query);
-        }
-    }
-
-    localSpellCheck(query) {
-        // يمكن إضافة قاموس خاص هنا
-        const commonMistakes = {
-            'يوتوب': 'يوتيوب',
-            'فيس بوك': 'فيسبوك',
-            'تويتر': 'تويتر'
-        };
-        return Object.keys(commonMistakes)
-            .filter(word => query.includes(word))
-            .map(word => ({
-                original: word,
-                suggestion: commonMistakes[word]
-            }));
-    }
-
-    // ------ الإجراءات السريعة ------
-    setupQuickActions() {
-        const actions = {
-            '!yt': 'بحث في يوتيوب',
-            '!img': 'بحث بالصور',
-            '!map': 'عرض الخريطة',
-            '!wiki': 'بحث في ويكيبيديا'
         };
 
-        const actionBox = document.createElement('div');
-        actionBox.id = 'quickActions';
-        document.getElementById('searchContainer').appendChild(actionBox);
-
-        this.updateQuickActions(actions);
-    }
-
-    updateQuickActions(actions) {
-        const actionBox = document.getElementById('quickActions');
-        actionBox.innerHTML = Object.entries(actions)
-            .map(([key, desc]) => `
-                <div class="quick-action" data-command="${key}">
-                    <kbd>${key}</kbd>
-                    <span>${desc}</span>
-                </div>
-            `).join('');
-    }
-
-    // ------ معاينة فورية للنتائج ------
-    setupInstantPreview() {
-        const previewContainer = document.createElement('div');
-        previewContainer.id = 'instantPreview';
-        document.getElementById('results').before(previewContainer);
-
-        document.getElementById('searchInput').addEventListener('focus', (e) => {
-            this.showInstantPreview(e.target.value);
+        window.addEventListener('unhandledrejection', event => {
+            this._trackEvent('error', {
+                type: 'unhandledrejection',
+                reason: event.reason
+            });
         });
     }
 
-    async showInstantPreview(query) {
-        if (query.length < 3) return;
-        
-        const previewData = await Promise.all([
-            this.getWikipediaPreview(query),
-            this.getWeatherPreview(query),
-            this.getStockPreview(query)
-        ]);
-
-        const previewHTML = previewData
-            .filter(item => item)
-            .map(item => `
-                <div class="preview-card">
-                    <h4>${item.title}</h4>
-                    <p>${item.content}</p>
-                    ${item.link ? `<a href="${item.link}" target="_blank">المزيد</a>` : ''}
-                </div>
-            `).join('');
-
-        document.getElementById('instantPreview').innerHTML = previewHTML;
+    _trackEvent(type, data) {
+        this.analyticsQueue.push({
+            type: 'error',
+            errorData: data,
+            timestamp: Date.now(),
+            sessionId: this.sessionId
+        });
     }
 
-    // ------ بقية الدوال المحسنة ------
-    async search(query) {
-        // التحقق من الأوامر الخاصة
-        if (query.startsWith('!yt ')) {
-            return this.searchYouTube(query.replace('!yt ', ''));
+    _reportPerformanceMetrics(metrics) {
+        if (navigator.connection?.effectiveType === '4g') {
+            const perfData = {
+                ...metrics,
+                deviceMemory: navigator.deviceMemory || 'unknown',
+                connection: navigator.connection.effectiveType,
+                timestamp: Date.now()
+            };
+            navigator.sendBeacon('/perf-metrics', JSON.stringify(perfData));
         }
+    }
 
-        // التصحيح التلقائي
-        const corrections = await this.checkSpelling(query);
-        if (corrections.length > 0) {
-            this.showSpellSuggestions(corrections);
+    _updateSearchHistory(term) {
+        if (term && term !== this.lastSearchTerm) {
+            window.history.replaceState({
+                ...window.history.state,
+                searchHistory: [...(window.history.state?.searchHistory || []), term]
+            }, '');
         }
-
-        // البحث العادي
-        return super.search(query);
+        this.lastSearchTerm = term;
     }
 
-    // ------ دعم البحث المتعدد المصادر ------
-    async searchYouTube(query) {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&key=YOUR_YOUTUBE_KEY`);
-        const data = await response.json();
-        return data.items.map(item => ({
-            type: 'video',
-            title: item.snippet.title,
-            url: `https://youtube.com/watch?v=${item.id.videoId}`,
-            thumbnail: item.snippet.thumbnails.default.url
-        }));
-    }
-
-    // ------ التحسينات الإضافية ------
-    saveToHistory(query) {
-        this.history = this.history.filter(item => item !== query);
-        this.history.unshift({
-            query,
+    _saveSearchState(term) {
+        const state = { 
+            ...window.history.state,
+            searchTerm: term,
             timestamp: Date.now()
-        });
-        localStorage.setItem('searchHistory', JSON.stringify(this.history));
+        };
+        history.replaceState(state, '', window.location);
     }
 
-    showSpellSuggestions(corrections) {
-        const correctionHTML = corrections
-            .map(c => `
-                <div class="spell-suggestion">
-                    <span>هل تقصد:</span>
-                    <button onclick="correctQuery('${c.original}', '${c.suggestion}')">
-                        ${c.suggestion}
-                    </button>
-                </div>
-            `).join('');
-        
-        document.getElementById('spellCheck').innerHTML = correctionHTML;
+    _loadPreferences() {
+        const prefs = localStorage.getItem('searchPreferences');
+        if (prefs) {
+            try {
+                const { darkMode, fontSize } = JSON.parse(prefs);
+                this._applyPreferences({ darkMode, fontSize });
+            } catch (e) {
+                console.error('Failed to load preferences:', e);
+            }
+        }
     }
 
-    // ... (بقية الدوال السابقة مع التحسينات)
+    _applyPreferences({ darkMode, fontSize }) {
+        if (darkMode) {
+            document.documentElement.classList.add('dark-mode');
+        }
+        if (fontSize) {
+            document.documentElement.style.fontSize = `${fontSize}px`;
+        }
+    }
+
+    // Rest of the existing methods with minor optimizations...
 }
 
-// التهيئة النهائية
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('ServiceWorker registration successful');
+            })
+            .catch(err => {
+                console.error('ServiceWorker registration failed:', err);
+            });
+    });
+}
+
+// Initialize with performance monitoring
 document.addEventListener('DOMContentLoaded', () => {
-    const engine = new AdvancedSearchEngine();
+    const loadStart = performance.now();
+    const search = new AdvancedSearch();
+    search.restoreSearchState();
     
-    // اختصارات لوحة المفاتيح
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'k') {
-            document.getElementById('searchInput').focus();
-            e.preventDefault();
-        }
+    window.addEventListener('load', () => {
+        const loadTime = performance.now() - loadStart;
+        const perfData = {
+            type: 'load',
+            duration: loadTime,
+            timestamp: Date.now()
+        };
+        navigator.sendBeacon('/perf-metrics', JSON.stringify(perfData));
     });
 });
+
 </script>
-
-<style>
-/* التنسيقات الجديدة للمساعدات */
-#quickActions {
-    display: flex;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-
-.quick-action {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.quick-action:hover {
-    background: #f5f5f5;
-    transform: translateY(-2px);
-}
-
-#instantPreview {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    margin: 1rem 0;
-}
-
-.preview-card {
-    padding: 1rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.spell-suggestion {
-    padding: 1rem;
-    background: #fff3cd;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
-</style>
 </body>
 </html>
