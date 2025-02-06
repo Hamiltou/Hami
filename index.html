@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>قنوات الفيديو 24/7</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .channel-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+        .video-player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+    <h1>قنوات الفيديو</h1>
+    
+    <!-- واجهة إنشاء القناة -->
+    <div id="channelForm">
+        <input type="text" id="channelName" placeholder="اسم القناة">
+        <select id="maxVideos">
+            <option value="5">5 فيديوهات</option>
+            <option value="10">10 فيديوهات</option>
+            <option value="15">15 فيديوهات</option>
+        </select>
+        <button onclick="createChannel()">إنشاء قناة</button>
+    </div>
+
+    <!-- قائمة القنوات -->
+    <div id="channelsList"></div>
+
+    <!-- مشغل الفيديو -->
+    <div id="videoPlayer" style="display: none;">
+        <div class="video-container">
+            <video class="video-player" controls id="videoElement"></video>
+        </div>
+        <button onclick="stopPlayback()">العودة للقائمة</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+
+    <script>
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // متغيرات التطبيق
+        let currentChannel = null;
+        let currentVideoIndex = 0;
+
+        // دالة إنشاء قناة جديدة
+        async function createChannel() {
+            const name = document.getElementById('channelName').value;
+            const maxVideos = document.getElementById('maxVideos').value;
+
+            await db.collection('channels').add({
+                name: name,
+                maxVideos: Number(maxVideos),
+                videoUrls: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert('تم إنشاء القناة بنجاح!');
+            loadChannels();
+        }
+
+        // دالة تحميل القنوات
+        async function loadChannels() {
+            const channelsList = document.getElementById('channelsList');
+            channelsList.innerHTML = '';
+
+            const snapshot = await db.collection('channels').get();
+            snapshot.forEach(doc => {
+                const channel = { id: doc.id, ...doc.data() };
+                const channelHTML = `
+                    <div class="channel-card">
+                        <h3>${channel.name}</h3>
+                        <p>الفيديوهات: ${channel.videoUrls.length}/${channel.maxVideos}</p>
+                        <button onclick="playChannel('${channel.id}')">تشغيل</button>
+                        <button onclick="uploadVideo('${channel.id}')">رفع فيديو</button>
+                        <button onclick="deleteChannel('${channel.id}')">حذف</button>
+                    </div>
+                `;
+                channelsList.innerHTML += channelHTML;
+            });
+        }
+
+        // دالة تشغيل القناة
+        async function playChannel(channelId) {
+            const doc = await db.collection('channels').doc(channelId).get();
+            currentChannel = doc.data();
+            currentVideoIndex = 0;
+            
+            document.getElementById('channelForm').style.display = 'none';
+            document.getElementById('channelsList').style.display = 'none';
+            document.getElementById('videoPlayer').style.display = 'block';
+            
+            playNextVideo();
+        }
+
+        // دالة تشغيل الفيديو التالي
+        function playNextVideo() {
+            if(currentVideoIndex >= currentChannel.videoUrls.length) currentVideoIndex = 0;
+            
+            const videoElement = document.getElementById('videoElement');
+            videoElement.src = currentChannel.videoUrls[currentVideoIndex];
+            videoElement.play();
+            
+            videoElement.onended = () => {
+                currentVideoIndex++;
+                playNextVideo();
+            };
+        }
+
+        // دالة رفع الفيديو
+        async function uploadVideo(channelId) {
+            const file = await new Promise(resolve => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                input.onchange = e => resolve(e.target.files[0]);
+                input.click();
+            });
+
+            const storageRef = storage.ref(`channels/${channelId}/${file.name}`);
+            await storageRef.put(file);
+            const url = await storageRef.getDownloadURL();
+
+            await db.collection('channels').doc(channelId).update({
+                videoUrls: firebase.firestore.FieldValue.arrayUnion(url)
+            });
+
+            alert('تم رفع الفيديو بنجاح!');
+            loadChannels();
+        }
+
+        // دالة حذف القناة
+        async function deleteChannel(channelId) {
+            if(confirm('هل أنت متأكد من حذف هذه القناة؟')) {
+                // حذف الفيديوهات من التخزين
+                const storageRef = storage.ref(`channels/${channelId}`);
+                const files = await storageRef.listAll();
+                await Promise.all(files.items.map(file => file.delete()));
+                
+                // حذف بيانات القناة
+                await db.collection('channels').doc(channelId).delete();
+                
+                loadChannels();
+            }
+        }
+
+        // دالة التهيئة الأولية
+        function init() {
+            loadChannels();
+            setInterval(loadChannels, 30000); // تحديث القنوات كل 30 ثانية
+        }
+
+        // بدء التطبيق
+        window.onload = init;
+    </script>
+</body>
+</html>
