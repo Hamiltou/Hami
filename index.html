@@ -3,33 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قنوات البث المباشر - النسخة المحسنة</title>
+    <title>منصة الفيديو فائقة السرعة</title>
     <style>
         :root {
-            --primary-color: #2196f3;
-            --error-color: #f44336;
-            --warning-color: #ff9800;
-            --success-color: #4caf50;
+            --primary: #2196F3;
+            --error: #f44336;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --background: #f5f5f5;
         }
 
-        /* أنماط التحميل */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
         .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
 
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top-color: var(--primary);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -37,97 +49,145 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .online { background: var(--success); color: white; }
+        .offline { background: var(--error); color: white; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
         }
 
         .channel-card {
-            border: 1px solid #eee;
-            padding: 1rem;
-            margin: 0.5rem;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             transition: transform 0.2s;
         }
 
         .channel-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
 
         .video-player {
             width: 100%;
             max-width: 800px;
-            margin: 1rem auto;
-            border-radius: 8px;
+            border-radius: 12px;
             background: #000;
+            margin: 2rem auto;
         }
 
-        .connection-status {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
         }
 
-        .online { background: var(--success-color); color: white; }
-        .offline { background: var(--error-color); color: white; }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        input {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 100%;
+            margin: 0.5rem 0;
+        }
     </style>
 </head>
 <body>
-    <div class="connection-status" id="connectionStatus"></div>
+    <div class="connection-status" id="connectionStatus">جار التحميل...</div>
     <div class="loading-overlay" id="loading">
         <div class="loading-spinner"></div>
     </div>
 
     <div class="container">
-        <h1>🎥 إدارة القنوات المباشرة</h1>
+        <h1 style="margin-bottom: 2rem; color: var(--primary);">🎥 منصة البث المباشر</h1>
         
-        <div class="create-channel">
+        <div style="margin-bottom: 2rem;">
             <input type="text" id="channelName" placeholder="اسم القناة" aria-label="اسم القناة">
-            <input type="number" id="maxVideos" min="1" value="5" aria-label="الحد الأقصى للفيديوهات">
-            <button onclick="app.createChannel()">➕ إنشاء قناة</button>
+            <input type="number" id="maxVideos" min="1" value="5" aria-label="عدد الفيديوهات">
+            <button onclick="app.createChannel()">إنشاء قناة جديدة</button>
         </div>
 
-        <div id="channelsList" class="channels-grid"></div>
+        <div id="channelsList"></div>
 
-        <div id="playerSection" style="display:none;">
+        <div id="playerSection" style="display: none;">
             <video id="mainVideo" class="video-player" controls playsinline></video>
-            <button onclick="app.stopPlayback()">⏹ إيقاف التشغيل</button>
+            <button onclick="app.stopPlayback()" style="margin-top: 1rem;">إيقاف التشغيل</button>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { 
-            getFirestore, collection, onSnapshot,
-            addDoc, updateDoc, doc, deleteDoc, 
-            serverTimestamp, arrayUnion, increment,
-            enableMultiTabIndexedDbPersistence, writeBatch,
-            query, orderBy, limit
+            initializeApp,
+            getApp,
+            getApps,
+            deleteApp 
+        } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { 
+            getFirestore,
+            collection,
+            onSnapshot,
+            addDoc,
+            updateDoc,
+            doc,
+            deleteDoc,
+            serverTimestamp,
+            arrayUnion,
+            increment,
+            enableMultiTabIndexedDbPersistence,
+            writeBatch,
+            query,
+            orderBy,
+            limit,
+            where
         } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         import { 
-            getStorage, ref, uploadBytesResumable, 
-            getDownloadURL, deleteObject, listAll 
+            getStorage,
+            ref,
+            uploadBytesResumable,
+            getDownloadURL,
+            deleteObject,
+            listAll
         } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
 
-        class VideoApp {
+        class UltraVideoApp {
             constructor() {
-                this.firebaseConfig = {
-                    apiKey: "AIzaSyB3...",
-                    authDomain: "your-project.firebaseapp.com",
-                    projectId: "your-project",
-                    storageBucket: "your-project.appspot.com",
-                    messagingSenderId: "123456789",
-                    appId: "1:123456789:web:abcdef1234567890"
-                };
-
                 this.config = {
+                    firebase: {
+                        apiKey: "AIzaSyB3...",
+                        authDomain: "your-project.firebaseapp.com",
+                        projectId: "your-project",
+                        storageBucket: "your-project.appspot.com",
+                        appId: "1:123..."
+                    },
                     maxFileSize: 100 * 1024 * 1024, // 100MB
-                    pageLimit: 10,
-                    cacheTTL: 300000 // 5 دقائق
+                    cacheTTL: 300000, // 5 دقائق
+                    debounceTime: 300,
+                    preloadCount: 3
                 };
 
                 this.state = {
@@ -135,7 +195,8 @@
                     currentPlaylist: [],
                     currentVideoIndex: 0,
                     unsubscribe: null,
-                    isOnline: navigator.onLine
+                    isOnline: navigator.onLine,
+                    pendingOperations: []
                 };
 
                 this.init();
@@ -143,48 +204,57 @@
 
             async init() {
                 try {
+                    this.cleanupFirebase();
                     this.initializeFirebase();
-                    this.setupConnectionMonitoring();
-                    await this.enableOfflineSupport();
-                    this.cacheElements();
-                    this.restoreCachedData();
+                    this.setupNetworkListeners();
+                    await this.enablePersistence();
+                    this.cacheDOM();
+                    this.restoreCache();
                     this.setupIntersectionObserver();
-                    await this.setupRealtimeUpdates();
+                    await this.initializeRealtimeUpdates();
                     this.registerServiceWorker();
                 } catch (error) {
-                    this.handleError('Initialization Error', error);
+                    this.handleError('التهيئة الأولية', error);
+                }
+            }
+
+            cleanupFirebase() {
+                if (getApps().length) {
+                    deleteApp(getApp());
                 }
             }
 
             initializeFirebase() {
-                this.app = initializeApp(this.firebaseConfig);
+                this.app = initializeApp(this.config.firebase);
                 this.db = getFirestore(this.app);
                 this.storage = getStorage(this.app);
             }
 
-            setupConnectionMonitoring() {
-                window.addEventListener('online', () => this.updateConnectionStatus(true));
-                window.addEventListener('offline', () => this.updateConnectionStatus(false));
-                this.updateConnectionStatus(navigator.onLine);
+            setupNetworkListeners() {
+                const updateStatus = (online) => {
+                    this.state.isOnline = online;
+                    const statusElement = document.getElementById('connectionStatus');
+                    statusElement.textContent = online ? 'متصل بالإنترنت' : 'وضع عدم الاتصال';
+                    statusElement.className = `connection-status ${online ? 'online' : 'offline'}`;
+                    
+                    if (online) this.processPendingOperations();
+                };
+
+                window.addEventListener('online', () => updateStatus(true));
+                window.addEventListener('offline', () => updateStatus(false));
+                updateStatus(navigator.onLine);
             }
 
-            updateConnectionStatus(online) {
-                this.state.isOnline = online;
-                const statusElement = document.getElementById('connectionStatus');
-                statusElement.textContent = online ? 'متصل بالإنترنت' : 'غير متصل';
-                statusElement.className = `connection-status ${online ? 'online' : 'offline'}`;
-            }
-
-            async enableOfflineSupport() {
+            async enablePersistence() {
                 try {
                     await enableMultiTabIndexedDbPersistence(this.db);
-                    console.log('Offline support enabled');
+                    console.log('تم تفعيل التخزين المحلي');
                 } catch (error) {
-                    console.warn('Offline persistence error:', error);
+                    console.warn('تعذر تفعيل التخزين المحلي:', error);
                 }
             }
 
-            cacheElements() {
+            cacheDOM() {
                 this.elements = {
                     channelsList: document.getElementById('channelsList'),
                     mainVideo: document.getElementById('mainVideo'),
@@ -195,29 +265,27 @@
             }
 
             setupIntersectionObserver() {
-                const observer = new IntersectionObserver((entries) => {
+                this.observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            this.preloadChannelData(entry.target.dataset.channelId);
+                            this.preloadChannelContent(entry.target.dataset.channelId);
                         }
                     });
                 }, { rootMargin: '200px' });
-
-                this.observer = observer;
             }
 
-            async preloadChannelData(channelId) {
+            async preloadChannelContent(channelId) {
                 const channel = this.state.channels.get(channelId);
-                if (!channel || channel.videoUrls.length === 0) return;
+                if (!channel) return;
 
-                channel.videoUrls.forEach(url => {
+                channel.videoUrls.slice(0, this.config.preloadCount).forEach(url => {
                     const video = new Video();
                     video.src = url;
                     video.preload = 'metadata';
                 });
             }
 
-            restoreCachedData() {
+            restoreCache() {
                 const cachedData = localStorage.getItem('channelsCache');
                 if (cachedData) {
                     try {
@@ -227,52 +295,39 @@
                             this.renderChannel(channel, true);
                         });
                     } catch (error) {
-                        console.error('Cache restoration error:', error);
+                        console.error('خطأ في استعادة البيانات:', error);
                     }
                 }
             }
 
-            async setupRealtimeUpdates() {
+            async initializeRealtimeUpdates() {
                 const channelsQuery = query(
                     collection(this.db, 'channels'),
                     orderBy('createdAt', 'desc'),
-                    limit(this.config.pageLimit)
+                    limit(20)
                 );
 
                 this.state.unsubscribe = onSnapshot(channelsQuery, 
-                    (snapshot) => this.handleSnapshot(snapshot),
-                    (error) => this.handleError('Realtime Update Error', error)
+                    snapshot => this.handleRealtimeUpdate(snapshot),
+                    error => this.handleError('التحديثات الفورية', error)
                 );
             }
 
-            handleSnapshot = (snapshot) => {
+            handleRealtimeUpdate = (snapshot) => {
                 const changes = snapshot.docChanges();
-                const batch = writeBatch(this.db);
-
                 changes.forEach(change => {
-                    const channel = this.processChange(change);
-                    if (!channel) return;
-
-                    switch (change.type) {
-                        case 'added':
-                        case 'modified':
-                            this.updateChannelState(channel);
-                            this.scheduleRender(channel);
-                            break;
-                        case 'removed':
-                            this.removeChannel(channel.id);
-                            break;
-                    }
+                    const channel = this.processChannelData(change.doc);
+                    this.updateChannelState(change.type, channel);
                 });
 
-                this.updateLocalCache();
+                this.updateLocalCache(snapshot);
                 this.debouncedRender();
             }
 
-            processChange(change) {
-                const data = change.doc.data();
+            processChannelData(doc) {
+                const data = doc.data();
                 return {
-                    id: change.doc.id,
+                    id: doc.id,
                     name: data.name,
                     maxVideos: data.maxVideos,
                     videoUrls: data.videoUrls || [],
@@ -280,72 +335,65 @@
                 };
             }
 
-            updateChannelState(channel) {
-                this.state.channels.set(channel.id, channel);
-            }
-
-            scheduleRender(channel) {
-                if (!this.renderQueue) this.renderQueue = new Map();
-                this.renderQueue.set(channel.id, channel);
+            updateChannelState(type, channel) {
+                switch (type) {
+                    case 'added':
+                    case 'modified':
+                        this.state.channels.set(channel.id, channel);
+                        break;
+                    case 'removed':
+                        this.state.channels.delete(channel.id);
+                        break;
+                }
             }
 
             debouncedRender = () => {
-                if (this.renderTimer) clearTimeout(this.renderTimer);
+                clearTimeout(this.renderTimer);
                 this.renderTimer = setTimeout(() => {
-                    this.renderQueue.forEach(channel => 
-                        this.renderChannel(channel)
-                    );
-                    this.renderQueue.clear();
-                }, 300);
+                    this.elements.channelsList.innerHTML = '';
+                    this.state.channels.forEach(channel => {
+                        this.renderChannel(channel);
+                    });
+                }, this.config.debounceTime);
             }
 
-            renderChannel(channel, fromCache = false) {
-                let element = document.querySelector(`[data-channel-id="${channel.id}"]`);
-                
-                if (!element) {
-                    element = document.createElement('div');
-                    element.className = 'channel-card';
-                    element.dataset.channelId = channel.id;
-                    this.elements.channelsList.prepend(element);
-                    this.observer.observe(element);
-                }
-
+            renderChannel(channel) {
+                const element = document.createElement('div');
+                element.className = 'channel-card';
+                element.dataset.channelId = channel.id;
                 element.innerHTML = this.generateChannelHTML(channel);
-                this.attachChannelEvents(element, channel.id);
+                this.attachEventListeners(element, channel.id);
+                this.elements.channelsList.appendChild(element);
+                this.observer.observe(element);
             }
 
             generateChannelHTML(channel) {
                 return `
                     <h3>${this.sanitizeHTML(channel.name)}</h3>
-                    <p>🎬 ${channel.videoUrls.length}/${channel.maxVideos}</p>
-                    <div class="channel-actions">
-                        <button class="play-btn" ${channel.videoUrls.length ? '' : 'disabled'}>
+                    <p>عدد الفيديوهات: ${channel.videoUrls.length}/${channel.maxVideos}</p>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <button class="play" ${!channel.videoUrls.length ? 'disabled' : ''}>
                             ${channel.videoUrls.length ? '▶️ تشغيل' : '⛔ غير متاح'}
                         </button>
-                        <button class="upload-btn" 
-                            ${channel.videoUrls.length >= channel.maxVideos ? 'disabled' : ''}>
+                        <button class="upload" ${channel.videoUrls.length >= channel.maxVideos ? 'disabled' : ''}>
                             📤 رفع فيديو
                         </button>
-                        <button class="delete-btn">🗑️ حذف</button>
+                        <button class="delete">🗑️ حذف</button>
                     </div>
-                    ${!this.state.isOnline ? '<div class="offline-badge">⚡ مخزن محليًا</div>' : ''}
                 `;
             }
 
-            attachChannelEvents(element, channelId) {
-                element.querySelector('.play-btn').addEventListener('click', 
-                    () => this.playChannel(channelId));
-                element.querySelector('.upload-btn').addEventListener('click', 
-                    () => this.uploadVideo(channelId));
-                element.querySelector('.delete-btn').addEventListener('click', 
-                    () => this.deleteChannel(channelId));
+            attachEventListeners(element, channelId) {
+                element.querySelector('.play').addEventListener('click', () => this.playChannel(channelId));
+                element.querySelector('.upload').addEventListener('click', () => this.uploadVideo(channelId));
+                element.querySelector('.delete').addEventListener('click', () => this.deleteChannel(channelId));
             }
 
             async createChannel() {
                 const name = this.elements.channelName.value.trim();
                 const maxVideos = parseInt(this.elements.maxVideos.value);
 
-                if (!this.validateChannelInput(name, maxVideos)) return;
+                if (!this.validateInput(name, maxVideos)) return;
 
                 try {
                     this.toggleLoading(true);
@@ -356,31 +404,150 @@
                         createdAt: serverTimestamp()
                     };
 
-                    await addDoc(collection(this.db, 'channels'), newChannel);
-                    this.clearForm();
-                    this.showToast('✅ تم إنشاء القناة بنجاح', 'success');
+                    const docRef = await addDoc(collection(this.db, 'channels'), newChannel);
+                    this.elements.channelName.value = '';
+                    this.showToast('تم إنشاء القناة بنجاح', 'success');
                 } catch (error) {
-                    this.handleError('Channel Creation', error);
+                    this.handleError('إنشاء القناة', error);
                 } finally {
                     this.toggleLoading(false);
                 }
             }
 
-            validateChannelInput(name, maxVideos) {
+            validateInput(name, maxVideos) {
                 if (!name || isNaN(maxVideos) || maxVideos < 1) {
-                    this.showToast('❌ بيانات غير صالحة', 'error');
+                    this.showToast('البيانات المدخلة غير صالحة', 'error');
                     return false;
                 }
                 return true;
             }
 
-            // ... (بقية الدوال مع التحسينات المماثلة)
+            async playChannel(channelId) {
+                const channel = this.state.channels.get(channelId);
+                if (!channel?.videoUrls?.length) return;
+
+                try {
+                    this.state.currentPlaylist = channel.videoUrls;
+                    this.state.currentVideoIndex = 0;
+                    this.togglePlayer(true);
+                    this.preloadNextVideos();
+                    await this.playCurrentVideo();
+                } catch (error) {
+                    this.handleError('تشغيل الفيديو', error);
+                }
+            }
+
+            preloadNextVideos() {
+                const nextIndexes = Array.from({length: this.config.preloadCount}, (_, i) => 
+                    this.state.currentVideoIndex + i + 1
+                );
+
+                nextIndexes.forEach(index => {
+                    if (index < this.state.currentPlaylist.length) {
+                        const video = new Video();
+                        video.src = this.state.currentPlaylist[index];
+                        video.preload = 'auto';
+                    }
+                });
+            }
+
+            async playCurrentVideo() {
+                try {
+                    this.elements.mainVideo.src = this.state.currentPlaylist[this.state.currentVideoIndex];
+                    await this.elements.mainVideo.play();
+                } catch (error) {
+                    this.handleError('تشغيل الفيديو', error);
+                    this.playNextVideo();
+                }
+            }
+
+            togglePlayer(show) {
+                this.elements.playerSection.style.display = show ? 'block' : 'none';
+                this.elements.channelsList.style.display = show ? 'none' : 'block';
+            }
+
+            async uploadVideo(channelId) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    if (file.size > this.config.maxFileSize) {
+                        this.showToast('حجم الملف يتجاوز 100MB', 'error');
+                        return;
+                    }
+
+                    try {
+                        this.toggleLoading(true);
+                        const storagePath = `channels/${channelId}/${Date.now()}_${file.name}`;
+                        const storageRef = ref(this.storage, storagePath);
+                        
+                        const uploadTask = uploadBytesResumable(storageRef, file);
+                        
+                        uploadTask.on('state_changed',
+                            snapshot => this.updateUploadProgress(channelId, snapshot),
+                            error => { throw error; }
+                        );
+
+                        await uploadTask;
+                        const url = await getDownloadURL(storageRef);
+                        
+                        await updateDoc(doc(this.db, 'channels', channelId), {
+                            videoUrls: arrayUnion(url)
+                        });
+
+                        this.showToast('تم الرفع بنجاح', 'success');
+                    } catch (error) {
+                        this.handleError('رفع الفيديو', error);
+                    } finally {
+                        this.toggleLoading(false);
+                    }
+                };
+                
+                input.click();
+            }
+
+            updateUploadProgress(channelId, snapshot) {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                const element = document.querySelector(`[data-channel-id="${channelId}"]`);
+                if (element) {
+                    element.querySelector('.upload').textContent = `📤 جاري الرفع ${Math.round(progress)}%`;
+                }
+            }
+
+            async deleteChannel(channelId) {
+                if (!confirm('هل أنت متأكد من حذف هذه القناة؟')) return;
+
+                try {
+                    this.toggleLoading(true);
+                    await this.deleteChannelData(channelId);
+                    this.showToast('تم الحذف بنجاح', 'success');
+                } catch (error) {
+                    this.handleError('حذف القناة', error);
+                } finally {
+                    this.toggleLoading(false);
+                }
+            }
+
+            async deleteChannelData(channelId) {
+                const batch = writeBatch(this.db);
+                batch.delete(doc(this.db, 'channels', channelId));
+
+                const storageRef = ref(this.storage, `channels/${channelId}`);
+                const files = await listAll(storageRef);
+                await Promise.all(files.items.map(file => deleteObject(file)));
+
+                await batch.commit();
+            }
 
             registerServiceWorker() {
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('/service-worker.js')
-                        .then(() => console.log('Service Worker registered'))
-                        .catch(err => console.error('SW registration failed:', err));
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(() => console.log('Service Worker مسجل'))
+                        .catch(err => console.error('فشل التسجيل:', err));
                 }
             }
 
@@ -392,68 +559,42 @@
                 return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             }
 
-            showToast(message, type = 'info') {
-                // ... (تنفيذ toast مع تحسينات الأداء)
-            }
+            showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body
+            appendChild(toast);
+setTimeout(() => toast.remove(), 3000);
+}
 
-            handleError(context, error) {
-                // ... (معالجة الأخطاء المحسنة)
-            }
-        }
+handleError(context, error) {
+    console.error(`[${context}]`, error);
+    this.showToast(`حدث خطأ: ${this.getErrorMessage(error.code)}`, 'error');
+}
 
-        // تهيئة التطبيق
-        const app = new VideoApp();
-        window.app = app;
+getErrorMessage(code) {  
+    const messages = {  
+        'permission-denied': 'رفض الإذن',  
+        'unavailable': 'غير متصل بالإنترنت',  
+        'storage/retry-limit-exceeded': 'فشل المحاولة',  
+        'default': 'خطأ غير متوقع'  
+    };  
+    return messages[code] || messages.default;  
+}  
 
-        // تسجيل Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('SW registered:', registration);
-                    })
-                    .catch(error => {
-                        console.log('SW registration failed:', error);
-                    });
-            });
-        }
-        const CACHE_NAME = 'video-cache-v1';
-const ASSETS = [
-  '/',
-  '/styles.css',
-  '/app.js',
-  '/assets/fallback-image.jpg'
-];
+// التهيئة النهائية  
+const app = new UltraVideoApp();  
+window.app = app;  
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request)
-          .then(res => {
-            if(event.request.url.includes('/videos/')) {
-              const clone = res.clone();
-              caches.open(CACHE_NAME)
-                .then(cache => cache.put(event.request, clone));
-            }
-            return res;
-          });
-      })
-      .catch(() => {
-        if(event.request.destination === 'video') {
-          return caches.match('/assets/fallback-video.mp4');
-        }
-        return caches.match('/');
-      })
-  );
-});
-    </script>
+// تسجيل Service Worker  
+if ('serviceWorker' in navigator) {  
+    window.addEventListener('load', () => {  
+        navigator.serviceWorker.register('/sw.js')  
+            .then(reg => console.log('SW مسجل:', reg))  
+            .catch(err => console.log('فشل تسجيل SW:', err));  
+    });  
+}
+</script>
 </body>
 </html>
