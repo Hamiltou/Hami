@@ -2,174 +2,493 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>قنوات الفيديو 24/7</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قنوات البث المباشر</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .channel-card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
-        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
-        .video-player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
-        input[type="file"] { display: none; }
+        :root {
+            --primary-color: #2196f3;
+            --error-color: #f44336;
+            --success-color: #4caf50;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .channel-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .channel-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            background: #000;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-50%) translateY(100%); }
+            to { transform: translateX(-50%) translateY(0); }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
     </style>
 </head>
 <body>
-    <h1>قنوات الفيديو</h1>
-    
-    <!-- واجهة إنشاء القناة -->
-    <div id="channelForm">
-        <input type="text" id="channelName" placeholder="اسم القناة">
-        <select id="maxVideos">
-            <option value="5">5 فيديوهات</option>
-            <option value="10">10 فيديوهات</option>
-            <option value="15">15 فيديوهات</option>
-        </select>
-        <button onclick="createChannel()">إنشاء قناة</button>
-    </div>
-
-    <!-- قائمة القنوات -->
-    <div id="channelsList"></div>
-
-    <!-- مشغل الفيديو -->
-    <div id="videoPlayer" style="display: none;">
-        <div class="video-container">
-            <video class="video-player" controls id="videoElement"></video>
+    <div class="container">
+        <h1>قنوات البث المباشر</h1>
+        
+        <div class="controls">
+            <label for="channelName" class="sr-only">اسم القناة</label>
+            <input type="text" id="channelName" placeholder="اسم القناة" class="form-input" required>
+            
+            <label for="maxVideos" class="sr-only">الحد الأقصى للفيديوهات</label>
+            <select id="maxVideos" class="form-select" aria-label="عدد الفيديوهات المسموح بها">
+                <option value="5">5 فيديوهات</option>
+                <option value="10" selected>10 فيديوهات</option>
+                <option value="15">15 فيديوهات</option>
+            </select>
+            
+            <button class="btn" id="createChannelBtn" aria-label="إنشاء قناة جديدة">
+                إنشاء قناة
+            </button>
         </div>
-        <button onclick="stopPlayback()">العودة للقائمة</button>
+
+        <div id="channelsList" class="channel-grid" role="list"></div>
+
+        <div id="playerSection" class="player-section" hidden>
+            <div class="video-container">
+                <video class="video-player" controls id="mainVideo" aria-label="مشغل الفيديو"></video>
+            </div>
+            <button class="btn" id="stopPlaybackBtn" aria-label="إيقاف التشغيل والعودة للقائمة">
+                العودة للقائمة
+            </button>
+        </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
-
-    <script>
-        // تهيئة Firebase
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-
-        // متغيرات التطبيق
-        let currentChannel = null;
-        let currentVideoIndex = 0;
-
-        // دالة إنشاء قناة جديدة
-        async function createChannel() {
-            const name = document.getElementById('channelName').value;
-            const maxVideos = document.getElementById('maxVideos').value;
-
-            await db.collection('channels').add({
-                name: name,
-                maxVideos: Number(maxVideos),
-                videoUrls: [],
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            alert('تم إنشاء القناة بنجاح!');
-            loadChannels();
-        }
-
-        // دالة تحميل القنوات
-        async function loadChannels() {
-            const channelsList = document.getElementById('channelsList');
-            channelsList.innerHTML = '';
-
-            const snapshot = await db.collection('channels').get();
-            snapshot.forEach(doc => {
-                const channel = { id: doc.id, ...doc.data() };
-                const channelHTML = `
-                    <div class="channel-card">
-                        <h3>${channel.name}</h3>
-                        <p>الفيديوهات: ${channel.videoUrls.length}/${channel.maxVideos}</p>
-                        <button onclick="playChannel('${channel.id}')">تشغيل</button>
-                        <button onclick="uploadVideo('${channel.id}')">رفع فيديو</button>
-                        <button onclick="deleteChannel('${channel.id}')">حذف</button>
-                    </div>
-                `;
-                channelsList.innerHTML += channelHTML;
-            });
-        }
-
-        // دالة تشغيل القناة
-        async function playChannel(channelId) {
-            const doc = await db.collection('channels').doc(channelId).get();
-            currentChannel = doc.data();
-            currentVideoIndex = 0;
-            
-            document.getElementById('channelForm').style.display = 'none';
-            document.getElementById('channelsList').style.display = 'none';
-            document.getElementById('videoPlayer').style.display = 'block';
-            
-            playNextVideo();
-        }
-
-        // دالة تشغيل الفيديو التالي
-        function playNextVideo() {
-            if(currentVideoIndex >= currentChannel.videoUrls.length) currentVideoIndex = 0;
-            
-            const videoElement = document.getElementById('videoElement');
-            videoElement.src = currentChannel.videoUrls[currentVideoIndex];
-            videoElement.play();
-            
-            videoElement.onended = () => {
-                currentVideoIndex++;
-                playNextVideo();
-            };
-        }
-
-        // دالة رفع الفيديو
-        async function uploadVideo(channelId) {
-            const file = await new Promise(resolve => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'video/*';
-                input.onchange = e => resolve(e.target.files[0]);
-                input.click();
-            });
-
-            const storageRef = storage.ref(`channels/${channelId}/${file.name}`);
-            await storageRef.put(file);
-            const url = await storageRef.getDownloadURL();
-
-            await db.collection('channels').doc(channelId).update({
-                videoUrls: firebase.firestore.FieldValue.arrayUnion(url)
-            });
-
-            alert('تم رفع الفيديو بنجاح!');
-            loadChannels();
-        }
-
-        // دالة حذف القناة
-        async function deleteChannel(channelId) {
-            if(confirm('هل أنت متأكد من حذف هذه القناة؟')) {
-                // حذف الفيديوهات من التخزين
-                const storageRef = storage.ref(`channels/${channelId}`);
-                const files = await storageRef.listAll();
-                await Promise.all(files.items.map(file => file.delete()));
+    <script type="module">
+        class VideoApp {
+            constructor() {
+                this.config = {
+                    firebase: {
+                        apiKey: "AIzaSyB3...",
+                        authDomain: "your-project.firebaseapp.com",
+                        projectId: "your-project",
+                        storageBucket: "your-project.appspot.com",
+                        appId: "1:123..."
+                    },
+                    maxFileSize: 100 * 1024 * 1024,
+                    preloadCount: 2
+                };
                 
-                // حذف بيانات القناة
-                await db.collection('channels').doc(channelId).delete();
+                this.state = {
+                    channels: new Map(),
+                    currentPlaylist: null,
+                    preloadedVideos: new Map(),
+                    unsubscribe: null
+                };
+
+                this.init();
+            }
+
+            async init() {
+                this.initFirebase();
+                this.cacheElements();
+                this.setupEventListeners();
+                await this.setupRealTimeUpdates();
+            }
+
+            initFirebase() {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(this.config.firebase);
+                }
+                this.db = firebase.firestore();
+                this.storage = firebase.storage();
+            }
+
+            cacheElements() {
+                this.elements = {
+                    channelsList: document.getElementById('channelsList'),
+                    playerSection: document.getElementById('playerSection'),
+                    mainVideo: document.getElementById('mainVideo'),
+                    channelName: document.getElementById('channelName'),
+                    maxVideos: document.getElementById('maxVideos'),
+                    createChannelBtn: document.getElementById('createChannelBtn'),
+                    stopPlaybackBtn: document.getElementById('stopPlaybackBtn')
+                };
+            }
+
+            setupEventListeners() {
+                this.elements.createChannelBtn.addEventListener('click', () => this.createChannel());
+                this.elements.stopPlaybackBtn.addEventListener('click', () => this.stopPlayback());
+                this.elements.channelName.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.createChannel();
+                });
+            }
+
+            async setupRealTimeUpdates() {
+                this.state.unsubscribe = this.db.collection('channels')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot({
+                        next: snapshot => this.handleSnapshot(snapshot),
+                        error: error => this.handleError(error, 'تحديث البيانات')
+                    });
+            }
+
+            handleSnapshot(snapshot) {
+                snapshot.docChanges().forEach(change => {
+                    const channel = this.parseChannelDoc(change.doc);
+                    
+                    switch (change.type) {
+                        case 'added':
+                        case 'modified':
+                            this.state.channels.set(channel.id, channel);
+                            this.updateChannelUI(channel);
+                            break;
+                        case 'removed':
+                            this.state.channels.delete(channel.id);
+                            this.removeChannelUI(channel.id);
+                            break;
+                    }
+                });
+            }
+
+            parseChannelDoc(doc) {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    name: data.name || 'بدون اسم',
+                    maxVideos: data.maxVideos || 10,
+                    videoUrls: data.videoUrls || [],
+                    createdAt: data.createdAt?.toDate() || new Date()
+                };
+            }
+
+            updateChannelUI(channel) {
+                let card = this.elements.channelsList.querySelector(`[data-channel-id="${channel.id}"]`);
                 
-                loadChannels();
+                if (!card) {
+                    card = document.createElement('article');
+                    card.className = 'channel-card';
+                    card.dataset.channelId = channel.id;
+                    card.setAttribute('role', 'listitem');
+                    this.elements.channelsList.prepend(card);
+                }
+                
+                this.renderChannelCard(card, channel);
+            }
+
+            renderChannelCard(card, channel) {
+                const isFull = channel.videoUrls.length >= channel.maxVideos;
+                
+                card.innerHTML = '';
+                
+                const heading = document.createElement('h3');
+                heading.textContent = channel.name;
+                
+                const info = document.createElement('p');
+                info.textContent = `الفيديوهات: ${channel.videoUrls.length}/${channel.maxVideos}`;
+                
+                const controls = document.createElement('div');
+                controls.className = 'controls';
+                
+                const playBtn = this.createButton(
+                    'تشغيل',
+                    () => this.playChannel(channel.id),
+                    !channel.videoUrls.length
+                );
+                
+                const uploadBtn = this.createButton(
+                    'رفع فيديو',
+                    () => this.uploadVideo(channel.id),
+                    isFull
+                );
+                
+                const deleteBtn = this.createButton(
+                    'حذف',
+                    () => this.deleteChannel(channel.id),
+                    false,
+                    'btn-danger'
+                );
+                
+                controls.append(playBtn, uploadBtn, deleteBtn);
+                card.append(heading, info, controls);
+            }
+
+            createButton(text, handler, disabled = false, className = '') {
+                const btn = document.createElement('button');
+                btn.className = `btn ${className}`;
+                btn.textContent = text;
+                btn.disabled = disabled;
+                btn.addEventListener('click', handler);
+                return btn;
+            }
+
+            async createChannel() {
+                const name = this.elements.channelName.value.trim();
+                const maxVideos = parseInt(this.elements.maxVideos.value);
+                
+                if (!name) return this.showToast('يرجى إدخال اسم القناة', 'error');
+                
+                try {
+                    await this.db.collection('channels').add({
+                        name,
+                        maxVideos,
+                        videoUrls: [],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    this.elements.channelName.value = '';
+                    this.showToast('تم إنشاء القناة بنجاح', 'success');
+                } catch (error) {
+                    this.handleError(error, 'إنشاء القناة');
+                }
+            }
+
+            async playChannel(channelId) {
+                const channel = this.state.channels.get(channelId);
+                if (!channel?.videoUrls?.length) return;
+                
+                this.state.currentPlaylist = channel.videoUrls;
+                this.elements.channelsList.hidden = true;
+                this.elements.playerSection.hidden = false;
+                
+                this.setupVideoPlayer();
+                this.playNextVideo(0);
+                this.preloadNextVideos(0);
+            }
+
+            preloadNextVideos(startIndex) {
+                for (let i = 1; i <= this.config.preloadCount; i++) {
+                    const index = startIndex + i;
+                    if (index >= this.state.currentPlaylist.length) break;
+                    
+                    const video = new Video();
+                    video.src = this.state.currentPlaylist[index];
+                    video.preload = 'auto';
+                    this.state.preloadedVideos.set(index, video);
+                }
+            }
+
+            setupVideoPlayer() {
+                this.elements.mainVideo.onended = () => {
+                    const nextIndex = (this.currentVideoIndex + 1) % this.state.currentPlaylist.length;
+                    this.playNextVideo(nextIndex);
+                };
+
+                this.elements.mainVideo.onerror = () => {
+                    this.showToast('حدث خطأ في تشغيل الفيديو', 'error');
+                    this.stopPlayback();
+                };
+            }
+
+            playNextVideo(index) {
+                this.currentVideoIndex = index;
+                this.elements.mainVideo.src = this.state.currentPlaylist[index];
+                
+                this.elements.mainVideo.play().catch(error => {
+                    this.showToast('يتطلب التشغيل تفاعل المستخدم', 'error');
+                });
+
+                this.preloadNextVideos(index);
+            }
+
+            stopPlayback() {
+                this.elements.mainVideo.pause();
+                this.elements.mainVideo.removeAttribute('src');
+                this.elements.mainVideo.load();
+                this.elements.playerSection.hidden = true;
+                this.elements.channelsList.hidden = false;
+                this.state.preloadedVideos.clear();
+            }
+
+            async uploadVideo(channelId) {
+                try {
+                    const file = await this.selectVideoFile();
+                    if (!file) return;
+
+                    this.showLoading(true);
+                    const url = await this.uploadFile(channelId, file);
+                    await this.updateChannelVideos(channelId, url);
+                    
+                    this.showToast('تم رفع الفيديو بنجاح', 'success');
+                } catch (error) {
+                    this.handleError(error, 'رفع الفيديو');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async selectVideoFile() {
+                return new Promise(resolve => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'video/*';
+                    
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file?.size > this.config.maxFileSize) {
+                            this.showToast('حجم الملف يتجاوز الحد المسموح (100MB)', 'error');
+                            resolve(null);
+                        }
+                        resolve(file);
+                    };
+                    
+                    input.click();
+                });
+            }
+
+            async uploadFile(channelId, file) {
+                const storageRef = this.storage.ref(`channels/${channelId}/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                return storageRef.getDownloadURL();
+            }
+
+            async updateChannelVideos(channelId, url) {
+                await this.db.collection('channels').doc(channelId).update({
+                    videoUrls: firebase.firestore.FieldValue.arrayUnion(url)
+                });
+            }
+
+            async deleteChannel(channelId) {
+                if (!confirm('هل أنت متأكد من حذف هذه القناة؟')) return;
+                
+                try {
+                    this.showLoading(true);
+                    await this.deleteChannelFiles(channelId);
+                    await this.db.collection('channels').doc(channelId).delete();
+                    this.showToast('تم حذف القناة بنجاح', 'success');
+                } catch (error) {
+                    this.handleError(error, 'حذف القناة');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async deleteChannelFiles(channelId) {
+                const ref = this.storage.ref(`channels/${channelId}`);
+                const { items } = await ref.listAll();
+                await Promise.all(items.map(file => file.delete()));
+            }
+
+            // Utilities
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toast.setAttribute('role', 'alert');
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('fade-out');
+                    setTimeout(() => toast.remove(), 300);
+                }, 2700);
+            }
+
+            handleError(error, context = '') {
+                console.error(`Error in ${context}:`, error);
+                this.showToast(`حدث خطأ أثناء ${context}`, 'error');
             }
         }
 
-        // دالة التهيئة الأولية
-        function init() {
-            loadChannels();
-            setInterval(loadChannels, 30000); // تحديث القنوات كل 30 ثانية
-        }
-
-        // بدء التطبيق
-        window.onload = init;
+        const app = new VideoApp();
     </script>
 </body>
 </html>
